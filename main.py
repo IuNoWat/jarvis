@@ -1,7 +1,10 @@
-import pygame
 import os
 import time
+
+import pygame
 import subprocess
+
+import cts_api
 
 pygame.init()
 
@@ -16,7 +19,7 @@ STARTUP_TIMESTAMP = time.strftime("%y/%m/%d-%H:%M:%S")
 FPS=15
 on=True
 
-class App() : #The App class 
+class App() : #The App class is a base to make something visible
     def __init__(self,name,process,command,must_be_on=True,update_interval=5) :
         #ID of APP
         self.name = name
