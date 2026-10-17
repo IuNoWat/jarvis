@@ -13,7 +13,6 @@ def get_visits(stop_code:str) :
     stop_code can be a LogicalStopCode (all directions of the stop) or a StopCode (only one physical stop)
     There is a list of StopCode in stop_codes.txt 
     """
-
     request_url = base_url +  stop_code
     print("Making request : "+request_url)
 
@@ -29,8 +28,16 @@ def get_visits(stop_code:str) :
 
     return vehicles
 
-def get_info(vehicle) :
+test_timer=0
 
+def get_info(vehicle) :
+    global test_timer
+    test_timer+=1
+    print(test_timer)
+    if test_timer>15 :
+        print("too much !")
+        test_timer=0
+        raise NameError
     arrival_time = time.strptime(vehicle["MonitoredCall"]["ExpectedArrivalTime"],"%Y-%m-%dT%H:%M:%S+02:00")
     arrival_time_as_epoch = time.mktime(arrival_time)
 

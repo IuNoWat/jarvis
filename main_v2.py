@@ -43,11 +43,10 @@ class App() : #The App class is a base to make something visible
 
         #Variables
         self.startup_timestamp = time.time()
-        self.last_update_timestamp = time.time()
+        self.last_update_timestamp = 0
 
         #Launching
         self.on_startup(self)
-        self.on_update(self)
 
     def update(self) :
         
@@ -55,8 +54,13 @@ class App() : #The App class is a base to make something visible
 
         if current_time-self.last_update_timestamp>self.update_interval*60 :
             print("UPDATING")
-            
-            self.on_update(self)
+            try :
+                self.on_update(self)
+                self.active=True
+            except Exception as error :
+                self.add_error(error)
+                self.active=False
+                pass
             
             self.last_update_timestamp = current_time
 
@@ -75,10 +79,20 @@ class App() : #The App class is a base to make something visible
 
         self.to_render.blit(app_title_font.render(first_line,1,pygame.Color(255,255,255),pygame.Color(0,0,0)),(0,0))
         self.to_render.blit(app_update_font.render(second_line,1,pygame.Color(255,255,255),pygame.Color(0,0,0)),(5,20))
-    
+
+        if self.active==False :
+            self.error_render()
+
+    def error_render(self) :
+        third_line = str(traceback.TracebackException.from_exception(self.errors[-1]))
+        self.to_render.blit(app_title_font.render(third_line,1,pygame.Color(255,255,255),pygame.Color(0,0,0)),(5,35))
+        
     def render(self) :
         self.base_render()
-        self.on_render(self)
+        if self.active : #If the app is active ,we render it normally
+            self.on_render(self)
+        else : #If add_error has been called, the app is considered not active, and the last error added is displayed
+            self.error_render()
         return self.to_render
     
     def add_error(self,error) :
@@ -132,6 +146,8 @@ def syncthing_update(self) :
 
     self.IDs = ",".join(search_IDs())
 
+
+    #If the app managed to update and found some Ids, it's considered active
     if len(self.IDs)>3 :
         self.active=True
     else :
@@ -161,11 +177,13 @@ def cts_update(self) :
     for entry in vehicles :
         infos.append(cts_api.get_info(entry))
 
+    self.infos =  infos
+
+    #If the update got to this point and infos is not empty, the app is considered active
     if infos!=[] :
         self.active=True
     else :
         self.active=False
-    self.infos =  infos    
 
 def inline_infos(info) :
     return info["type"] + " " + info["line"] + " - " +  info["direction"] + " : " + str(info["arrival_in"])
@@ -179,7 +197,7 @@ APP_CTS = App(
     startup_method=cts_startup,
     update_method=cts_update,
     render_method=cts_render,
-    update_interval=1,
+    update_interval=2,
     render_length=250#140
 )
 
@@ -212,14 +230,9 @@ def do_the_thing() :
 
     cursor=100
     for i,app in enumerate(APPS) :
-        try :
-            app.update()
-            SCREEN.blit(app.render(),(10,cursor))
-            cursor+=app.render_length+5
-        except Exception as error :
-            print("ERROR")
-            app.add_error(error)
-
+        app.update()
+        SCREEN.blit(app.render(),(10,cursor))
+        cursor+=app.render_length+5
 
     fps = str(round(CLOCK.get_fps(),1))
     startup = STARTUP_TIMESTAMP
