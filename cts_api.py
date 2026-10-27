@@ -28,17 +28,10 @@ def get_visits(stop_code:str) :
 
     return vehicles
 
-test_timer=0
+
 
 def get_info(vehicle) :
-    global test_timer
-    test_timer+=1
-    print(test_timer)
-    if test_timer>15 :
-        print("too much !")
-        test_timer=0
-        raise NameError
-    arrival_time = time.strptime(vehicle["MonitoredCall"]["ExpectedArrivalTime"],"%Y-%m-%dT%H:%M:%S+02:00")
+    arrival_time = time.strptime(vehicle["MonitoredCall"]["ExpectedArrivalTime"][:19],"%Y-%m-%dT%H:%M:%S")
     arrival_time_as_epoch = time.mktime(arrival_time)
 
     to_return = {

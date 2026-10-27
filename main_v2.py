@@ -15,11 +15,37 @@ time_font=pygame.font.Font("/home/pi/Desktop/jarvis/unifont.otf",60)
 app_title_font=pygame.font.Font("/home/pi/Desktop/jarvis/unifont.otf",15)
 app_update_font=pygame.font.Font("/home/pi/Desktop/jarvis/unifont.otf",12)
 
+VERSION = 0.2
 SCREEN = pygame.display.set_mode((320,480),pygame.FULLSCREEN)
 CLOCK = pygame.time.Clock()
 STARTUP_TIMESTAMP = time.strftime("%y/%m/%d-%H:%M:%S")
+LOG_PATH = "/home/pi/Desktop/Notes_syncthing/log/jarvis/"
+LOG_FILE = None
 FPS=15
 on=True
+
+def log_create(path) :
+    global LOG_FILE
+    path_to_file = LOG_PATH + time.strftime("%y_%m_%d - Jarvis log.md")
+    file = open(path_to_file,"w")
+    file.write(f"Log for Jarvis {VERSION} started at {STARTUP_TIMESTAMP}")
+    file.write(f"\n")
+    file.write(f"\n")
+    LOG_FILE = path_to_file
+    file.close()
+
+def log_print(my_string) :
+    print(my_string)
+    log_add_lines([my_string])
+
+def log_add_lines(my_list) :
+    file = open(LOG_FILE,"a")
+    for string in my_list :
+        file.write(time.strftime("%y/%m/%d-%H:%M:%S : ")+str(string))
+    file.write(f"\n")
+    file.close()
+
+log_create(LOG_PATH)
 
 class App() : #The App class is a base to make something visible
     def __init__(self,name,startup_method,update_method,render_method,update_interval=5,render_length=40) :
@@ -53,7 +79,7 @@ class App() : #The App class is a base to make something visible
         current_time =  time.time()
 
         if current_time-self.last_update_timestamp>self.update_interval*60 :
-            print("UPDATING")
+            log_print("UPDATING")
             try :
                 self.on_update(self)
                 self.active=True
@@ -97,8 +123,7 @@ class App() : #The App class is a base to make something visible
     
     def add_error(self,error) :
         self.errors.append(error)
-        print(traceback.TracebackException.from_exception(error))
-
+        log_print(traceback.TracebackException.from_exception(error))
     
     def on_startup(self) :
         """
@@ -119,25 +144,25 @@ class App() : #The App class is a base to make something visible
         pass
 
 def search_IDs() :
-    print(f"Searching corresponding IDs with command "+f"pgrep -x syncthing")
+    log_print(f"Searching corresponding IDs with command "+f"pgrep -x syncthing")
     msg = subprocess.run(f"pgrep -x syncthing",shell=True, capture_output=True,encoding="latin-1")
     output = msg.stdout
-    print(f"Output : {output}")
+    log_print(f"Output : {output}")
     found_IDs = output.splitlines()
-    print(f'Found IDs : {found_IDs}')
+    log_print(f'Found IDs : {found_IDs}')
     return found_IDs
 
 def delete_all() :
-    print("Deleting all found processes")
+    log_print("Deleting all found processes")
     IDs = search_IDs()
     for i,entry in enumerate(IDs) :
-        print(f"{i} - Deleting process {entry}")
+        log_print(f"{i} - Deleting process {entry}")
         msg = subprocess.run(f"kill -9 {entry}",shell=True, capture_output=True)
-        print(f"{i} - Result : {msg}")
+        log_print(f"{i} - Result : {msg}")
 
 def syncthing_startup(self) :
     delete_all()
-    print(f"Launching command : syncthing --no-browser")
+    log_print(f"Launching command : syncthing --no-browser")
     subprocess.Popen("syncthing --no-browser",shell=True)
 
     self.IDs=[]
